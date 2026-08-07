@@ -1,0 +1,6 @@
+patched/*.jar
+work/
+logs/
+pipeline/
+.env
+*.log

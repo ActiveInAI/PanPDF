@@ -1,0 +1,20 @@
+services:
+  panpdf:
+    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:2.11.0
+    container_name: panpdf
+    restart: unless-stopped
+    environment:
+      DISABLE_ADDITIONAL_FEATURES: "false"
+      SECURITY_ENABLELOGIN: "false"
+      SYSTEM_DEFAULTLOCALE: zh-CN
+      SECURITY_CUSTOMGLOBALAPIKEY: "${PANPDF_API_KEY:-change-me}"
+    ports:
+      - "${PANPDF_BIND:-0.0.0.0}:${PANPDF_PORT:-8083}:8080"
+    volumes:
+      - ./config:/configs
+      - ./customFiles:/customFiles
+      - ./patched/app.jar:/app/app.jar:ro
+      - ./patched/common-2.11.0-plain.jar:/app/lib/common-2.11.0-plain.jar:ro
+      - ./patched/proprietary-2.11.0-plain.jar:/app/lib/proprietary-2.11.0-plain.jar:ro
+      - ./logs:/logs
+      - ./pipeline:/pipeline
