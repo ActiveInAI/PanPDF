@@ -9,9 +9,9 @@ on:
       - 'packaging/windows/**'
 
 jobs:
-  windows:
-    runs-on: windows-latest
-    timeout-minutes: 90
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -19,36 +19,60 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Extract and patch app bundle from official image
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work patched bundle/app
+          docker pull docker.stirlingpdf.com/stirlingtools/stirling-pdf:2.11.0
+          CID="$(docker create docker.stirlingpdf.com/stirlingtools/stirling-pdf:2.11.0)"
+          docker cp "$CID:/app/app.jar" work/app.jar
+          docker cp "$CID:/app/lib" work/lib
+          docker rm "$CID"
+          python scripts/apply_patches.py work/app.jar patched/app.jar
+          python scripts/apply_patches.py work/lib/common-2.11.0-plain.jar patched/common-2.11.0-plain.jar
+          python scripts/apply_patches.py work/lib/proprietary-2.11.0-plain.jar patched/proprietary-2.11.0-plain.jar
+          cp patched/app.jar bundle/app/app.jar
+          cp -r work/lib bundle/app/lib
+          cp patched/common-2.11.0-plain.jar bundle/app/lib/common-2.11.0-plain.jar
+          cp patched/proprietary-2.11.0-plain.jar bundle/app/lib/proprietary-2.11.0-plain.jar
+          cp -r customFiles/static bundle/customFiles/static
+          mkdir -p bundle/configs
+          cp config/settings.yml bundle/configs/settings.yml
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: panpdf-app-bundle
+          path: bundle
+          retention-days: 1
+
+  windows:
+    needs: prepare
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - name: Extract app jars from official image
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p work patched input
-          docker pull --platform linux/amd64 docker.stirlingpdf.com/stirlingtools/stirling-pdf:2.11.0
-          CID="$(docker create --platform linux/amd64 docker.stirlingpdf.com/stirlingtools/stirling-pdf:2.11.0)"
-          docker cp "$CID:/app/app.jar" work/app.jar
-          docker cp "$CID:/app/lib" work/lib
-          docker rm "$CID"
+      - uses: actions/download-artifact@v4
+        with:
+          name: panpdf-app-bundle
+          path: bundle
 
-      - name: Apply PanPDF branding patches
+      - name: Assemble jpackage input
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/apply_patches.py work/app.jar patched/app.jar
-          python scripts/apply_patches.py work/lib/common-2.11.0-plain.jar patched/common-2.11.0-plain.jar
-          python scripts/apply_patches.py work/lib/proprietary-2.11.0-plain.jar patched/proprietary-2.11.0-plain.jar
-          cp patched/app.jar input/app.jar
-          cp work/lib/*.jar input/
-          cp patched/common-2.11.0-plain.jar input/common-2.11.0-plain.jar
-          cp patched/proprietary-2.11.0-plain.jar input/proprietary-2.11.0-plain.jar
-          cp -r customFiles/static input/customFiles/static
+          mkdir -p input
+          cp bundle/app/app.jar input/app.jar
+          cp bundle/app/lib/*.jar input/
+          cp -r bundle/customFiles/static input/customFiles/static
           mkdir -p input/configs
-          cp config/settings.yml input/configs/settings.yml
+          cp bundle/configs/settings.yml input/configs/settings.yml
 
       - name: Build jpackage app image
         shell: bash
