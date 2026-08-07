@@ -67,11 +67,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p input
+          mkdir -p input/customFiles input/configs
           cp bundle/app/app.jar input/app.jar
           cp bundle/app/lib/*.jar input/
           cp -r bundle/customFiles/static input/customFiles/static
-          mkdir -p input/configs
           cp bundle/configs/settings.yml input/configs/settings.yml
 
       - name: Build jpackage app image
