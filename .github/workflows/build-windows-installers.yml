@@ -36,8 +36,8 @@ jobs:
           cp -r work/lib bundle/app/lib
           cp patched/common-2.11.0-plain.jar bundle/app/lib/common-2.11.0-plain.jar
           cp patched/proprietary-2.11.0-plain.jar bundle/app/lib/proprietary-2.11.0-plain.jar
+          mkdir -p bundle/customFiles bundle/configs
           cp -r customFiles/static bundle/customFiles/static
-          mkdir -p bundle/configs
           cp config/settings.yml bundle/configs/settings.yml
 
       - uses: actions/upload-artifact@v4
