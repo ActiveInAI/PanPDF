@@ -38,7 +38,25 @@ docker compose up -d
 - `customFiles/static/`：前端品牌覆盖层（标题、文案、Logo、多语言）
 - `scripts/apply_patches.py`：Java class 常量池重写器，用于替换后端品牌字符串
 - `scripts/rebuild_patched.sh`：从官方镜像生成补丁 jar
+- `packaging/`：安装包构建脚本（Windows x64 便携包、Ubuntu amd64/arm64 .deb）
 - `docs/`：Logo 与品牌素材
+
+## 安装包
+
+构建脚本：`packaging/build-packages.sh`，产物输出到 `dist/`（不入库）：
+
+- `PanPDF-windows-x64.zip`：Windows x64 便携包，内含 JRE、补丁应用与 `install-panpdf.ps1` 安装脚本（开始菜单快捷方式）
+- `panpdf_2.11.0-1_amd64.deb`：Ubuntu/Debian x64，自动安装 systemd 服务 `panpdf`
+- `panpdf_2.11.0-1_arm64.deb`：Ubuntu/Debian arm64，同上
+
+Linux 安装后访问 `http://localhost:8083`，服务由 systemd 管理：
+
+```bash
+sudo apt install ./panpdf_2.11.0-1_amd64.deb   # 或 arm64 包
+systemctl status panpdf
+```
+
+安装包内置 Temurin 21 JRE；LibreOffice/Ghostscript/qpdf/Tesseract 等高级转换与 OCR 工具通过 `.deb` 的 `Recommends` 提示安装。
 
 ## 许可与归属
 

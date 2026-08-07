@@ -1,0 +1,21 @@
+[Unit]
+Description=PanPDF - local PDF toolbox
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/panpdf
+Environment=STIRLING_BASE_PATH=/opt/panpdf
+Environment=SECURITY_ENABLELOGIN=false
+Environment=DISABLE_ADDITIONAL_FEATURES=false
+Environment=SYSTEM_DEFAULTLOCALE=zh-CN
+Environment=PANPDF_PORT=8083
+ExecStart=/opt/panpdf/scripts/start.sh
+Restart=on-failure
+RestartSec=5
+User=panpdf
+Group=panpdf
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
